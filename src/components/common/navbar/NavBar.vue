@@ -1,5 +1,5 @@
 <template>
-  <div class="nav-bar">
+  <div class="nav-bar">   <!-- slot一般用div包裹来设置样式 -->
     <div class="left">
       <slot name="left"></slot>
     </div>
