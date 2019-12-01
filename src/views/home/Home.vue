@@ -48,6 +48,7 @@ import TabControl from "./childComps/TabControl";
 
 import { getHomeMultidata, getHomeGoods } from "network/home";
 import { debounce } from "common/utils";
+import {itemListenerMixin} from "common/mixin"
 
 export default {
   name: "Home",
@@ -61,6 +62,7 @@ export default {
     Scroll,
     BackTop
   },
+  mixins:[itemListenerMixin],
   data() {
     return {
       banners: [],
@@ -75,10 +77,11 @@ export default {
       isShowBackTop: false,
       tabOffsetTop: 0,
       isTabFixed: false,
-      saveY:0  /* 记录离开首页的位置 */
+      saveY: 0 /* 记录离开首页的位置 */,
+      // itemListener: null  //混入
     };
   },
-
+  
   created() {
     // 1.请求首页多条数据
     // 具体逻辑写在methods
@@ -92,10 +95,13 @@ export default {
 
   mounted() {
     // 1. 监听 GoodsListitem 中图片加载完成   /* 防抖 */
-    const refresh = debounce(this.$refs.scroll.refresh, 200);
-    this.$bus.$on("itemImageLoad", () => {
-      refresh(); /* 重新刷新，解决卡顿bug */
-    });
+    // const refresh = debounce(this.$refs.scroll.refresh, 200);
+
+    // // 对监听事件进行保存
+    // this.itemListener = () => {/* 重新刷新，解决卡顿bug */
+    //   refresh();
+    // }; 
+    // this.$bus.$on("itemImageLoad", this.itemListener);
 
     // 2.获取tabControl的offsetTop
     // 所有的组件都有一个属性$el：用于获取组件中的元素
@@ -113,7 +119,10 @@ export default {
     this.$refs.scroll.refresh(); /* 强制刷新排除不能滚动、莫名突然回到顶部情况 */
   },
   deactivated() {
+    // 1.保存Y值
     this.saveY = this.$refs.scroll.scroll.y;
+    // 2. 取消全局事件的监听
+    this.$bus.$off('itemImgLoad', this.itemListener);
   },
   methods: {
     /**
@@ -132,8 +141,8 @@ export default {
           this.currentType = "sell";
           break;
       }
-      this.$refs.tabControl1.currentIndex = index
-      this.$refs.tabControl2.currentIndex = index
+      this.$refs.tabControl1.currentIndex = index;
+      this.$refs.tabControl2.currentIndex = index;
     },
 
     backClick() {
@@ -141,9 +150,9 @@ export default {
     },
     contentScroll(position) {
       // 1. 判断BackTop是否显示
-      this.isShowBackTop = (-position.y) > 1000;
+      this.isShowBackTop = -position.y > 1000;
       //2. 决定tabContro是否吸顶
-      this.isTabFixed = (-position.y) > this.tabOffsetTop;
+      this.isTabFixed = -position.y > this.tabOffsetTop;
     },
     loadMore() {
       /* 上拉加载更多 */
@@ -186,7 +195,7 @@ export default {
   background-color: var(--color-tint);
   color: #fff;
   /* 在使用浏览器原生滚动时，为了使浏览器不随一起滚动 */
- /*  position: fixed;
+  /*  position: fixed;
   left: 0;
   right: 0;
   top: 0;
